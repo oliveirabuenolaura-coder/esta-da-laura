@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Estacionamento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-green {
+            background-color: #10b981;
+        }
+
+        .btn-red {
+            background-color: #ef4444;
+        }
+
+        .grid-vagas {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 15px;
+        }
+
+        .vaga-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            min-height: 90px;
+        }
+
+        .vaga-card.LIVRE {
+            background-color: #059669;
+        }
+
+        .vaga-card.OCUPADA {
+            background-color: #dc2626;
+        }
+
+        .vaga-codigo {
+            font-size: 22px;
+        }
+
+        .vaga-tipo {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        #feedback {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 6px;
+            display: none;
+            font-size: 13px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .msg-ok {
+            background: #064e3b;
+            color: #a7f3d0;
+        }
+
+        .msg-erro {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🚗 Controle de Estacionamento</h1>
+    </div>
+    <div class="container">
+        <div>
+            <div class="card">
+                <h3>Registrar Entrada</h3>
+                <div class="form-group">
+                    <label>PLACA DO VEÍCULO</label>
+                    <input type="text" id="placaEntrada" placeholder="ABC1234">
+                </div>
+                <div class="form-group">
+                    <label>CÓDIGO DA VAGA</label>
+                    <input type="text" id="vagaEntrada" placeholder="A1">
+                </div>
+                <button class="btn-green" onclick="darEntrada()">Dar Entrada</button>
+            </div>
+
+            <div class="card">
+                <h3>Registrar Saída</h3>
+                <div class="form-group">
+                    <label>PLACA DO VEÍCULO</label>
+                    <input type="text" id="placaSaida" placeholder="ABC1234">
+                </div>
+                <button class="btn-red" onclick="darSaida()">Calcular e Liberar</button>
+            </div>
+            <div id="feedback"></div>
+        </div>
+
+        <div class="card">
+            <h3>🅿️ Vagas no Pátio</h3>
+            <div id="gridVagas" class="grid-vagas"></div>
+        </div>
+    </div>
+
+    <script>
+        function avisar(msg, erro = false) {
+            const fb = document.getElementById('feedback');
+            fb.className = erro ? 'msg-erro' : 'msg-ok';
+            fb.innerText = msg;
+            fb.style.display = 'block';
+            setTimeout(() => { fb.style.display = 'none'; }, 4000);
+        }
+
+        async function carregarVagas() {
+            try {
+                const res = await fetch('/api/vagas');
+                const vagas = await res.json();
+                const grid = document.getElementById('gridVagas');
+                grid.innerHTML = '';
+                vagas.forEach(v => {
+                    const div = document.createElement('div');
+                    div.className = `vaga-card ${v.status}`;
+                    div.innerHTML = `<div class="vaga-codigo">${v.codigo}</div><div class="vaga-tipo">${v.tipo}</div><div>${v.status}</div>`;
+                    grid.appendChild(div);
+                });
+            } catch (err) {
+                avisar('Erro ao conectar ao servidor.', true);
+            }
+        }
+
+        async function darEntrada() {
+            const placa = document.getElementById('placaEntrada').value;
+            const vagaCodigo = document.getElementById('vagaEntrada').value;
+            const res = await fetch('/api/entrada', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ placa, vagaCodigo })
+            });
+            const dados = await res.json();
+            if (res.ok) {
+                avisar(dados.mensagem);
+                document.getElementById('placaEntrada').value = '';
+                document.getElementById('vagaEntrada').value = '';
+                carregarVagas();
+            } else {
+                avisar(dados.mensagem, true);
+            }
+        }
+
+        async function darSaida() {
+            const placa = document.getElementById('placaSaida').value;
+            const res = await fetch('/api/saida', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ placa })
+            });
+            const dados = await res.json();
+            if (res.ok) {
+                avisar(`${dados.mensagem} Valor a pagar: R$ ${dados.valorPagar},00`);
+                document.getElementById('placaSaida').value = '';
+                carregarVagas();
+            } else {
+                avisar(dados.mensagem, true);
+            }
+        }
+
+        carregarVagas();
+    </script>
+</body>
+
+</html>
