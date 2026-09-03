@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estacionamento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .left-panel {
+            width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 18px;
+            color: #f1f5f9;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #f1f5f9;
+            font-size: 15px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            border-color: #38bdf8;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-entrada {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-entrada:hover {
+            background: #059669;
+        }
+
+        .btn-saida {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-saida:hover {
+            background: #dc2626;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 25px;
+            min-height: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .right-panel h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .vaga {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .vaga.ocupada {
+            border-left: 4px solid #10b981;
+        }
+
+        .vaga.livre {
+            border-left: 4px solid #64748b;
+            color: #94a3b8;
+        }
+
+        .comprovante {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .comprovante.show {
+            display: block;
+        }
+
+        .comprovante h3 {
+            margin-bottom: 15px;
+            color: #38bdf8;
+        }
+
+        .comprovante p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .valor {
+            font-size: 22px;
+            font-weight: bold;
+            color: #10b981;
+            margin-top: 15px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat {
+            background: #0f172a;
+            padding: 12px 18px;
+            border-radius: 10px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat span {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .stat strong {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- LADO ESQUERDO -->
+        <div class="left-panel">
+            <!-- Entrada -->
+            <div class="card">
+                <h2>Registrar Entrada</h2>
+                <label>PLACA DO VEÍCULO</label>
+                <input type="text" id="placaEntrada" placeholder="ABC1234" maxlength="8">
+
+                <label>CÓDIGO DA VAGA</label>
+                <input type="text" id="vagaEntrada" placeholder="A1" maxlength="4">
+
+                <button class="btn-entrada" onclick="darEntrada()">Dar Entrada</button>
+            </div>
+
+            <!-- Saída -->
+            <div class="card">
+                <h2>Registrar Saída</h2>
+                <label>PLACA DO VEÍCULO</label>
+                <input type="text" id="placaSaida" placeholder="ABC1234" maxlength="8">
+
+                <button class="btn-saida" onclick="darSaida()">Calcular e Liberar</button>
+            </div>
+        </div>
+
+        <!-- LADO DIREITO -->
+        <div class="right-panel">
+            <h2>Status do Estacionamento</h2>
+
+            <div class="stats">
+                <div class="stat">
+                    <span>LIVRES</span>
+                    <strong id="livres">10</strong>
+                </div>
+                <div class="stat">
+                    <span>OCUPADAS</span>
+                    <strong id="ocupadas">0</strong>
+                </div>
+            </div>
+
+            <div id="listaVagas"></div>
+
+            <div class="comprovante" id="comprovante">
+                <h3>Comprovante de Saída</h3>
+                <p><strong>Placa:</strong> <span id="c-placa"></span></p>
+                <p><strong>Vaga:</strong> <span id="c-vaga"></span></p>
+                <p><strong>Entrada:</strong> <span id="c-entrada"></span></p>
+                <p><strong>Saída:</strong> <span id="c-saida"></span></p>
+                <p><strong>Tempo:</strong> <span id="c-tempo"></span></p>
+                <div class="valor">R$ <span id="c-valor">0,00</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configurações
+        const VALOR_HORA = 5.00;
+        const TOTAL_VAGAS = 10;
+
+        // Dados
+        let vagas = {};
+        let carros = {};
+
+        // Inicializa vagas A1 até A10
+        for (let i = 1; i <= TOTAL_VAGAS; i++) {
+            vagas[`A${i}`] = null;
+        }
+
+        function atualizarTela() {
+            let livres = 0;
+            let ocupadas = 0;
+            let html = '';
+
+            for (let codigo in vagas) {
+                if (vagas[codigo] === null) {
+                    livres++;
+                    html += `<div class="vaga livre"><span>${codigo}</span><span>LIVRE</span></div>`;
+                } else {
+                    ocupadas++;
+                    const placa = vagas[codigo];
+                    const entrada = carros[placa].entrada;
+                    html += `
+                        <div class="vaga ocupada">
+                            <span>${codigo} - ${placa}</span>
+                            <span>${entrada.toLocaleTimeString()}</span>
+                        </div>`;
+                }
+            }
+
+            document.getElementById('livres').textContent = livres;
+            document.getElementById('ocupadas').textContent = ocupadas;
+            document.getElementById('listaVagas').innerHTML = html;
+        }
+
+        function darEntrada() {
+            const placa = document.getElementById('placaEntrada').value.trim().toUpperCase();
+            const vaga = document.getElementById('vagaEntrada').value.trim().toUpperCase();
+
+            if (!placa || !vaga) {
+                alert('Preencha a placa e a vaga!');
+                return;
+            }
+
+            if (!vagas.hasOwnProperty(vaga)) {
+                alert('Vaga inválida! Use A1 até A10');
+                return;
+            }
+
+            if (vagas[vaga] !== null) {
+                alert('Essa vaga já está ocupada!');
+                return;
+            }
+
+            if (carros[placa]) {
+                alert('Esse carro já está estacionado!');
+                return;
+            }
+
+            // Registra
+            vagas[vaga] = placa;
+            carros[placa] = {
+                vaga: vaga,
+                entrada: new Date()
+            };
+
+            // Limpa campos
+            document.getElementById('placaEntrada').value = '';
+            document.getElementById('vagaEntrada').value = '';
+            document.getElementById('comprovante').classList.remove('show');
+
+            atualizarTela();
+            alert(`Carro ${placa} estacionado na vaga ${vaga}`);
+        }
+
+        function darSaida() {
+            const placa = document.getElementById('placaSaida').value.trim().toUpperCase();
+
+            if (!placa) {
+                alert('Digite a placa!');
+                return;
+            }
+
+            if (!carros[placa]) {
+                alert('Esse carro não está no estacionamento!');
+                return;
+            }
+
+            const dados = carros[placa];
+            const entrada = dados.entrada;
+            const saida = new Date();
+            const tempoMs = saida - entrada;
+            const horas = tempoMs / (1000 * 60 * 60);
+
+            // Cobrança: mínimo 1 hora, arredonda para cima
+            let horasCobradas = Math.ceil(horas);
+            if (horasCobradas < 1) horasCobradas = 1;
+
+            const valor = horasCobradas * VALOR_HORA;
+
+            // Formata tempo
+            const minutos = Math.floor(tempoMs / 60000);
+            const tempoTexto = `${Math.floor(minutos / 60)}h ${minutos % 60}min`;
+
+            // Mostra comprovante
+            document.getElementById('c-placa').textContent = placa;
+            document.getElementById('c-vaga').textContent = dados.vaga;
+            document.getElementById('c-entrada').textContent = entrada.toLocaleString();
+            document.getElementById('c-saida').textContent = saida.toLocaleString();
+            document.getElementById('c-tempo').textContent = tempoTexto;
+            document.getElementById('c-valor').textContent = valor.toFixed(2).replace('.', ',');
+            document.getElementById('comprovante').classList.add('show');
+
+            // Libera vaga
+            vagas[dados.vaga] = null;
+            delete carros[placa];
+
+            document.getElementById('placaSaida').value = '';
+            atualizarTela();
+        }
+
+        // Inicia a tela
+        atualizarTela();
+    </script>
+</body>
+
+</html>
